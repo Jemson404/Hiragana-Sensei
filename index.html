@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Hiragana Sensei">
+<meta name="apple-mobile-web-app-title" content="Hiragana Sensei">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F5F0E8">
+<title>Hiragana Sensei</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #F5F0E8;
+  --cream-dark: #EDE6D6;
+  --cream-deeper: #E3D9C4;
+  --ink: #1C1915;
+  --ink-soft: #3D3830;
+  --ink-muted: #7A7268;
+  --ink-faint: #B8B0A4;
+  --rust: #8B4513;
+  --rust-light: #C4693A;
+  --sage: #4A6741;
+  --sage-light: #6B9462;
+  --indigo: #2C3E6B;
+  --gold: #A08040;
+  --gold-light: #C4A055;
+  --paper-line: rgba(28,25,21,0.08);
+  --shadow: rgba(28,25,21,0.12);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--cream);
+  font-family: 'Crimson Pro', Georgia, serif;
+  color: var(--ink);
+  user-select: none;
+}
+
+.screen {
+  position: absolute; inset: 0;
+  background: var(--cream);
+  display: none; flex-direction: column;
+  overflow: hidden;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+.screen.active { display: flex; }
+
+.screen::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, var(--paper-line) 27px, var(--paper-line) 28px);
+  pointer-events: none;
+  z-index: 0;
+}
+.screen > * { position: relative; z-index: 1; }
+
+/* HOME */
+#home { padding: 0 24px; justify-content: space-between; }
+.home-header { padding-top: 52px; }
+.home-logo { font-family: 'Noto Serif JP', serif; font-size: 13px; font-weight: 300; letter-spacing: 0.25em; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 6px; }
+.home-title { font-family: 'Noto Serif JP', serif; font-size: 42px; font-weight: 300; color: var(--ink); line-height: 1.1; margin-bottom: 4px; }
+.home-subtitle { font-size: 18px; font-style: italic; color: var(--ink-muted); font-weight: 300; }
+.home-kana-display { text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; }
+.home-kana-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 320px; }
+.home-kana-char { font-family: 'Noto Serif JP', serif; font-size: 20px; font-weight: 300; color: var(--ink-faint); transition: color 0.3s; }
+.home-kana-char.learned { color: var(--ink-soft); }
+.home-kana-char.current { color: var(--rust); }
+.home-actions { padding-bottom: 32px; }
+.home-level-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.level-card { background: white; border: 0.5px solid rgba(28,25,21,0.15); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: background 0.15s, transform 0.1s; -webkit-appearance: none; width: 100%; text-align: left; font-family: inherit; }
+.level-card:active { transform: scale(0.98); background: var(--cream-dark); }
+.level-card.locked { opacity: 0.45; cursor: default; }
+.level-card-num { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 400; flex-shrink: 0; }
+.level-card-num.l1 { background: rgba(139,69,19,0.1); color: var(--rust); }
+.level-card-num.l2 { background: rgba(74,103,65,0.1); color: var(--sage); }
+.level-card-num.l3 { background: rgba(44,62,107,0.1); color: var(--indigo); }
+.level-card-num.locked { background: rgba(28,25,21,0.06); color: var(--ink-faint); }
+.level-card-info { flex: 1; }
+.level-card-name { font-size: 16px; font-weight: 500; color: var(--ink); margin-bottom: 1px; }
+.level-card-desc { font-size: 13px; color: var(--ink-muted); font-style: italic; }
+.level-card-arrow { color: var(--ink-faint); font-size: 18px; }
+.home-nav { display: flex; justify-content: space-around; border-top: 0.5px solid var(--paper-line); padding-top: 14px; }
+.home-nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 16px; font-family: inherit; }
+.home-nav-btn span:first-child { font-size: 20px; }
+.home-nav-btn span:last-child { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.05em; }
+.home-nav-btn.active span:last-child { color: var(--rust); }
+.home-nav-btn .nav-icon { width: 22px; height: 22px; display: block; object-fit: contain; filter: invert(45%) sepia(7%) saturate(545%) hue-rotate(356deg) brightness(93%) contrast(86%); }
+.home-nav-btn.active .nav-icon { filter: invert(24%) sepia(52%) saturate(1293%) hue-rotate(356deg) brightness(91%) contrast(91%); }
+
+/* ROW SELECT */
+#row-select { overflow-y: auto; }
+.screen-header { display: flex; align-items: center; gap: 12px; padding: 16px 20px 12px; border-bottom: 0.5px solid var(--paper-line); flex-shrink: 0; }
+.btn-back { background: none; border: none; cursor: pointer; font-size: 22px; color: var(--ink-soft); padding: 4px; margin-left: -4px; font-family: inherit; }
+.screen-title { font-family: 'Noto Serif JP', serif; font-size: 20px; font-weight: 300; flex: 1; }
+.level-badge { font-family: 'DM Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 20px; letter-spacing: 0.05em; }
+.level-badge.l1 { background: rgba(139,69,19,0.1); color: var(--rust); }
+.level-badge.l2 { background: rgba(74,103,65,0.1); color: var(--sage); }
+.level-badge.l3 { background: rgba(44,62,107,0.1); color: var(--indigo); }
+.row-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+.row-item { background: white; border: 0.5px solid rgba(28,25,21,0.12); border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: background 0.15s, transform 0.1s; position: relative; overflow: hidden; -webkit-appearance: none; width: 100%; text-align: left; font-family: inherit; }
+.row-item:active:not(.locked) { transform: scale(0.98); }
+.row-item.locked { opacity: 0.5; cursor: default; }
+.row-item.mastered { border-color: rgba(74,103,65,0.3); }
+.row-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.row-item-name { font-size: 15px; font-weight: 500; color: var(--ink); }
+.row-item-status { font-size: 13px; color: var(--ink-muted); }
+.row-item-kana { font-family: 'Noto Serif JP', serif; font-size: 22px; font-weight: 300; letter-spacing: 0.1em; color: var(--ink-soft); margin-bottom: 8px; }
+.row-progress-bar { height: 3px; background: var(--cream-deeper); border-radius: 2px; overflow: hidden; }
+.row-progress-fill { height: 100%; border-radius: 2px; background: var(--sage-light); transition: width 0.5s ease; }
+.row-item.locked .row-item-kana { color: var(--ink-faint); }
+.lock-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; }
+
+/* LESSON */
+#lesson { overflow: hidden; }
+.lesson-top-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; flex-shrink: 0; }
+.lesson-progress-track { flex: 1; height: 3px; background: var(--cream-deeper); border-radius: 2px; overflow: hidden; }
+.lesson-progress-fill { height: 100%; background: var(--rust); border-radius: 2px; transition: width 0.4s ease; }
+.lesson-progress-text { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--ink-muted); min-width: 40px; text-align: right; }
+.lesson-body { flex: 1; display: flex; flex-direction: column; padding: 0 24px; overflow: hidden; }
+.lesson-phonetic { text-align: center; font-family: 'DM Mono', monospace; font-size: 15px; letter-spacing: 0.15em; color: var(--ink-muted); margin-bottom: 8px; margin-top: 16px; }
+.lesson-char-area { text-align: center; margin-bottom: 12px; }
+.lesson-char { font-family: 'Noto Serif JP', serif; font-size: 88px; font-weight: 300; color: var(--ink); line-height: 1; display: inline-block; }
+.canvas-wrapper { position: relative; flex: 1; border-radius: 12px; overflow: hidden; background: white; border: 0.5px solid rgba(28,25,21,0.12); min-height: 200px; max-height: 260px; }
+.trace-canvas, .draw-canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+.trace-canvas { opacity: 0.18; pointer-events: none; }
+.draw-canvas { cursor: crosshair; }
+.canvas-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; color: var(--ink-faint); font-size: 14px; font-style: italic; transition: opacity 0.3s; }
+.lesson-feedback { text-align: center; padding: 10px 0 6px; min-height: 42px; }
+.feedback-score { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--ink-muted); }
+.feedback-msg { font-size: 17px; font-style: italic; color: var(--ink-soft); margin-top: 2px; }
+.feedback-msg.pass { color: var(--sage); }
+.feedback-msg.fail { color: var(--rust); }
+.lesson-actions { display: flex; gap: 10px; padding: 8px 24px 20px; flex-shrink: 0; }
+.btn-primary { flex: 1; padding: 14px; background: var(--ink); color: var(--cream); border: none; border-radius: 10px; font-family: 'Crimson Pro', serif; font-size: 17px; font-weight: 400; cursor: pointer; transition: background 0.15s, transform 0.1s; letter-spacing: 0.02em; }
+.btn-primary:active { transform: scale(0.97); background: var(--ink-soft); }
+.btn-secondary { flex: 1; padding: 14px; background: transparent; color: var(--ink-soft); border: 0.5px solid rgba(28,25,21,0.2); border-radius: 10px; font-family: 'Crimson Pro', serif; font-size: 17px; font-weight: 400; cursor: pointer; transition: background 0.15s, transform 0.1s; letter-spacing: 0.02em; }
+.btn-secondary:active { transform: scale(0.97); background: var(--cream-dark); }
+.btn-disabled { opacity: 0.35; pointer-events: none; }
+.btn-check { width: 100%; }
+.result-actions { display: flex; gap: 12px; justify-content: center; }
+.result-actions .btn-secondary, .result-actions .btn-primary { flex: 0 0 auto; width: 130px; padding: 13px 0; }
+
+/* RESULT OVERLAY */
+.result-overlay { position: absolute; inset: 0; background: rgba(245,240,232,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 24px; }
+.result-overlay.show { opacity: 1; pointer-events: all; }
+.result-kana { font-family: 'Noto Serif JP', serif; font-size: 80px; font-weight: 300; margin-bottom: 8px; }
+.result-score { font-family: 'DM Mono', monospace; font-size: 48px; font-weight: 300; margin-bottom: 4px; }
+.result-score.pass { color: var(--sage); }
+.result-score.fail { color: var(--rust); }
+.result-label { font-size: 22px; font-style: italic; color: var(--ink-muted); margin-bottom: 32px; }
+.result-hint { font-size: 15px; color: var(--ink-muted); font-style: italic; margin-bottom: 32px; text-align: center; }
+
+/* PROGRESS */
+#progress { overflow-y: auto; }
+.progress-header { padding: 20px 20px 16px; border-bottom: 0.5px solid var(--paper-line); flex-shrink: 0; }
+.progress-title { font-family: 'Noto Serif JP', serif; font-size: 24px; font-weight: 300; margin-bottom: 4px; }
+.progress-subtitle { font-size: 15px; color: var(--ink-muted); font-style: italic; }
+.progress-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 16px 20px; flex-shrink: 0; }
+.stat-card { background: white; border: 0.5px solid rgba(28,25,21,0.1); border-radius: 10px; padding: 12px 10px; text-align: center; }
+.stat-num { font-family: 'DM Mono', monospace; font-size: 26px; font-weight: 300; color: var(--ink); line-height: 1; margin-bottom: 3px; }
+.stat-label { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.05em; text-transform: uppercase; }
+.progress-section-title { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-muted); padding: 0 20px 8px; }
+.progress-rows { padding: 0 20px 16px; display: flex; flex-direction: column; gap: 8px; }
+.progress-row-item { display: flex; align-items: center; gap: 12px; background: white; border: 0.5px solid rgba(28,25,21,0.1); border-radius: 10px; padding: 10px 14px; }
+.progress-row-icon { font-size: 16px; flex-shrink: 0; }
+.progress-row-info { flex: 1; }
+.progress-row-name { font-size: 14px; font-weight: 500; }
+.progress-row-kana { font-family: 'Noto Serif JP', serif; font-size: 16px; font-weight: 300; color: var(--ink-muted); margin-top: 2px; }
+.progress-row-bar { width: 60px; flex-shrink: 0; }
+.weak-section { padding: 0 20px 24px; }
+.weak-title { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--rust); margin-bottom: 10px; }
+.weak-chars { display: flex; flex-wrap: wrap; gap: 8px; }
+.weak-char { background: rgba(139,69,19,0.08); border: 0.5px solid rgba(139,69,19,0.2); border-radius: 8px; padding: 8px 12px; text-align: center; }
+.weak-char-kana { font-family: 'Noto Serif JP', serif; font-size: 26px; font-weight: 300; color: var(--ink); }
+.weak-char-rom { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--rust); margin-top: 1px; }
+
+/* MAD MAX */
+#madmax { overflow: hidden; }
+.madmax-header { padding: 14px 20px 10px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.madmax-title { font-family: 'Noto Serif JP', serif; font-size: 16px; font-weight: 300; letter-spacing: 0.1em; }
+.streak-display { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--rust); }
+.madmax-body { flex: 1; display: flex; flex-direction: column; padding: 0 24px; overflow: hidden; }
+
+/* WEAK MODE */
+#weakmode { overflow: hidden; }
+
+/* SETTINGS */
+#settings { overflow-y: auto; }
+.settings-section { padding: 16px 20px; }
+.settings-group { margin-bottom: 24px; }
+.settings-group-title { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 12px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; background: white; border: 0.5px solid rgba(28,25,21,0.1); border-radius: 10px; padding: 14px 16px; margin-bottom: 6px; }
+.setting-label { font-size: 16px; color: var(--ink); }
+.setting-desc { font-size: 13px; color: var(--ink-muted); font-style: italic; margin-top: 2px; }
+.toggle { width: 44px; height: 26px; background: var(--cream-deeper); border-radius: 13px; position: relative; cursor: pointer; transition: background 0.2s; border: none; flex-shrink: 0; }
+.toggle.on { background: var(--sage-light); }
+.toggle::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.toggle.on::after { transform: translateX(18px); }
+
+/* TOASTS */
+.toast-container { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); z-index: 100; pointer-events: none; }
+.toast { background: var(--ink); color: var(--cream); padding: 10px 20px; border-radius: 20px; font-size: 14px; font-style: italic; margin-bottom: 8px; opacity: 0; transform: translateY(-8px); transition: opacity 0.2s, transform 0.2s; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.screen { transition: opacity 0.2s ease; }
+.screen:not(.active) { opacity: 0; }
+.screen.active { opacity: 1; }
+.audio-btn { background: none; border: none; cursor: pointer; font-size: 20px; padding: 4px; }
+
+/* ROW COMPLETE BADGE */
+.row-complete-badge { position: fixed; inset: 0; background: rgba(245,240,232,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+.row-complete-badge.show { opacity: 1; pointer-events: all; }
+.badge-icon { font-size: 64px; margin-bottom: 16px; }
+.badge-title { font-family: 'Noto Serif JP', serif; font-size: 28px; font-weight: 300; margin-bottom: 8px; }
+.badge-sub { font-size: 18px; font-style: italic; color: var(--ink-muted); margin-bottom: 32px; }
+.badge-kana { font-family: 'Noto Serif JP', serif; font-size: 36px; font-weight: 300; letter-spacing: 0.15em; color: var(--ink-muted); margin-bottom: 32px; }
+</style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="row-complete-badge" id="rowBadge">
+  <div class="badge-icon">✦</div>
+  <div class="badge-title" id="badgeTitle">Row Complete</div>
+  <div class="badge-sub" id="badgeSub">Next row unlocked</div>
+  <div class="badge-kana" id="badgeKana"></div>
+  <button class="btn-primary" style="width:160px;padding:12px 24px" onclick="dismissBadge()">Continue</button>
+</div>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div class="home-header">
+    <div class="home-logo">先生</div>
+    <div class="home-title">Hiragana<br>Sensei</div>
+    <div class="home-subtitle">a quiet place to learn</div>
+  </div>
+  <div class="home-kana-display">
+    <div class="home-kana-grid" id="homeKanaGrid"></div>
+  </div>
+  <div class="home-actions">
+    <div class="home-level-cards">
+      <button class="level-card" onclick="openLevel(1)">
+        <div class="level-card-num l1">I</div>
+        <div class="level-card-info"><div class="level-card-name">Guided Trace</div><div class="level-card-desc">write over the guide</div></div>
+        <div class="level-card-arrow">›</div>
+      </button>
+      <button class="level-card" id="lvl2card" onclick="openLevel(2)">
+        <div class="level-card-num" id="lvl2num">II</div>
+        <div class="level-card-info"><div class="level-card-name">Memory Practice</div><div class="level-card-desc">write from memory</div></div>
+        <div class="level-card-arrow">›</div>
+      </button>
+      <button class="level-card" id="lvl3card" onclick="openMadMax()">
+        <div class="level-card-num" id="lvl3num">III</div>
+        <div class="level-card-info"><div class="level-card-name">Mad Max Fury</div><div class="level-card-desc">random order, no overlays</div></div>
+        <div class="level-card-arrow">›</div>
+      </button>
+    </div>
+    <div class="home-nav">
+      <button class="home-nav-btn active" onclick="showScreen('home')"><img class="nav-icon" src="icons/torii.svg" alt="" aria-hidden="true"><span>Home</span></button>
+      <button class="home-nav-btn" onclick="showScreen('progress')"><img class="nav-icon" src="icons/shinkansen.svg" alt="" aria-hidden="true"><span>Progress</span></button>
+      <button class="home-nav-btn" onclick="openWeakMode()"><img class="nav-icon" src="icons/daruma.svg" alt="" aria-hidden="true"><span>Weak</span></button>
+      <button class="home-nav-btn" onclick="showScreen('settings')"><span>⚙</span><span>Settings</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ROW SELECT -->
+<div id="row-select" class="screen">
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen('home')">‹</button>
+    <div class="screen-title" id="rowSelectTitle">Choose a row</div>
+    <div class="level-badge" id="rowSelectBadge">Level I</div>
+  </div>
+  <div class="row-list" id="rowList"></div>
+</div>
+
+<!-- LESSON -->
+<div id="lesson" class="screen">
+  <div class="lesson-top-bar">
+    <button class="btn-back" onclick="exitLesson()">‹</button>
+    <div class="lesson-progress-track"><div class="lesson-progress-fill" id="lessonProgressFill"></div></div>
+    <div class="lesson-progress-text" id="lessonProgressText">0/5</div>
+    <button class="audio-btn" onclick="playAudio()" title="pronunciation">♪</button>
+  </div>
+  <div class="lesson-body">
+    <div class="lesson-phonetic" id="lessonPhonetic">ka</div>
+    <div class="lesson-char-area"><div class="lesson-char" id="lessonChar">か</div></div>
+    <div class="canvas-wrapper" id="canvasWrapper">
+      <canvas class="trace-canvas" id="traceCanvas"></canvas>
+      <canvas class="draw-canvas" id="drawCanvas"></canvas>
+      <div class="canvas-hint" id="canvasHint">Trace with your finger</div>
+    </div>
+    <div class="lesson-feedback" id="lessonFeedback"></div>
+  </div>
+  <div class="lesson-actions">
+    <button class="btn-secondary" id="btnRetry" onclick="retryChar()">Retry</button>
+    <button class="btn-primary btn-check" id="btnCheck" onclick="checkDrawing()">Check</button>
+  </div>
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-kana" id="resultKana"></div>
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-label" id="resultLabel"></div>
+    <div class="result-hint" id="resultHint"></div>
+    <div class="result-actions">
+      <button class="btn-secondary" onclick="retryFromResult()">Retry</button>
+      <button class="btn-primary" onclick="nextChar()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div id="progress" class="screen">
+  <div class="progress-header">
+    <button class="btn-back" onclick="showScreen('home')" style="margin-bottom:8px">‹ back</button>
+    <div class="progress-title">Your Progress</div>
+    <div class="progress-subtitle">every stroke remembered</div>
+  </div>
+  <div class="progress-stats" id="progressStats"></div>
+  <div class="progress-section-title">Kana Rows · Level I</div>
+  <div class="progress-rows" id="progressRows"></div>
+  <div class="weak-section">
+    <div class="weak-title">Needs Practice</div>
+    <div class="weak-chars" id="weakChars"></div>
+  </div>
+</div>
+
+<!-- MAD MAX -->
+<div id="madmax" class="screen">
+  <div class="madmax-header">
+    <button class="btn-back" onclick="exitLesson()">‹</button>
+    <div class="madmax-title">Mad Max Fury</div>
+    <div class="streak-display" id="streakDisplay">✦ 0</div>
+  </div>
+  <div class="madmax-body" id="madmaxBody">
+    <div class="lesson-phonetic" id="mmPhonetic">-</div>
+    <div class="lesson-char-area" style="display:none"><div class="lesson-char" id="mmChar">-</div></div>
+    <div class="canvas-wrapper" id="mmCanvasWrapper">
+      <canvas class="draw-canvas" id="mmCanvas"></canvas>
+      <div class="canvas-hint" id="mmHint">Write the character</div>
+    </div>
+    <div class="lesson-feedback" id="mmFeedback"></div>
+  </div>
+  <div class="lesson-actions">
+    <button class="btn-secondary" onclick="mmRetry()">Retry</button>
+    <button class="btn-primary btn-check" id="btnMMCheck" onclick="mmCheck()">Check</button>
+  </div>
+  <div class="result-overlay" id="mmResultOverlay">
+    <div class="result-kana" id="mmResultKana"></div>
+    <div class="result-score" id="mmResultScore"></div>
+    <div class="result-label" id="mmResultLabel"></div>
+    <div class="result-hint" id="mmResultHint"></div>
+    <div class="result-actions">
+      <button class="btn-secondary" onclick="mmRetryResult()">Retry</button>
+      <button class="btn-primary" onclick="mmNext()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEAK MODE -->
+<div id="weakmode" class="screen">
+  <div class="madmax-header">
+    <button class="btn-back" onclick="exitLesson()">‹</button>
+    <div class="madmax-title">Weak Letters</div>
+    <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--rust)" id="weakCount"></div>
+  </div>
+  <div class="madmax-body">
+    <div class="lesson-phonetic" id="weakPhonetic">-</div>
+    <div class="canvas-wrapper" id="weakCanvasWrapper">
+      <canvas class="draw-canvas" id="weakCanvas"></canvas>
+      <div class="canvas-hint" id="weakHint">Write from memory</div>
+    </div>
+    <div class="lesson-feedback" id="weakFeedback"></div>
+  </div>
+  <div class="lesson-actions">
+    <button class="btn-secondary" onclick="weakRetry()">Retry</button>
+    <button class="btn-primary btn-check" onclick="weakCheck()">Check</button>
+  </div>
+  <div class="result-overlay" id="weakResultOverlay">
+    <div class="result-kana" id="weakResultKana"></div>
+    <div class="result-score" id="weakResultScore"></div>
+    <div class="result-label" id="weakResultLabel"></div>
+    <div class="result-hint" id="weakResultHint"></div>
+    <div class="result-actions">
+      <button class="btn-secondary" onclick="weakRetryResult()">Retry</button>
+      <button class="btn-primary" onclick="weakNext()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="screen">
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen('home')">‹</button>
+    <div class="screen-title">Settings</div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-group">
+      <div class="settings-group-title">Learning</div>
+      <div class="setting-row">
+        <div><div class="setting-label">Pronunciation Audio</div><div class="setting-desc">play sound when viewing a card</div></div>
+        <button class="toggle on" id="toggleAudio" onclick="toggleSetting('audio')"></button>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Stroke Replay</div><div class="setting-desc">show writing motion on retry</div></div>
+        <button class="toggle on" id="toggleStroke" onclick="toggleSetting('stroke')"></button>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Show Trace Guide</div><div class="setting-desc">semi-transparent overlay in level I</div></div>
+        <button class="toggle on" id="toggleTrace" onclick="toggleSetting('trace')"></button>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">Preferences</div>
+      <div class="setting-row">
+        <div><div class="setting-label">Left-hand Mode</div><div class="setting-desc">flip check button to left</div></div>
+        <button class="toggle" id="toggleHand" onclick="toggleSetting('hand')"></button>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">Data</div>
+      <div class="setting-row" style="cursor:pointer" onclick="resetProgress()">
+        <div><div class="setting-label" style="color:var(--rust)">Reset All Progress</div><div class="setting-desc">start fresh from the beginning</div></div>
+        <div style="color:var(--ink-faint)">›</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROWS = [
+  { name:'Vowels',    roman:'a-row',  chars:[{k:'あ',r:'a'},{k:'い',r:'i'},{k:'う',r:'u'},{k:'え',r:'e'},{k:'お',r:'o'}] },
+  { name:'K-row',    roman:'ka-ko',  chars:[{k:'か',r:'ka'},{k:'き',r:'ki'},{k:'く',r:'ku'},{k:'け',r:'ke'},{k:'こ',r:'ko'}] },
+  { name:'S-row',    roman:'sa-so',  chars:[{k:'さ',r:'sa'},{k:'し',r:'shi'},{k:'す',r:'su'},{k:'せ',r:'se'},{k:'そ',r:'so'}] },
+  { name:'T-row',    roman:'ta-to',  chars:[{k:'た',r:'ta'},{k:'ち',r:'chi'},{k:'つ',r:'tsu'},{k:'て',r:'te'},{k:'と',r:'to'}] },
+  { name:'N-row',    roman:'na-no',  chars:[{k:'な',r:'na'},{k:'に',r:'ni'},{k:'ぬ',r:'nu'},{k:'ね',r:'ne'},{k:'の',r:'no'}] },
+  { name:'H-row',    roman:'ha-ho',  chars:[{k:'は',r:'ha'},{k:'ひ',r:'hi'},{k:'ふ',r:'fu'},{k:'へ',r:'he'},{k:'ほ',r:'ho'}] },
+  { name:'M-row',    roman:'ma-mo',  chars:[{k:'ま',r:'ma'},{k:'み',r:'mi'},{k:'む',r:'mu'},{k:'め',r:'me'},{k:'も',r:'mo'}] },
+  { name:'Y-row',    roman:'ya-yo',  chars:[{k:'や',r:'ya'},{k:'ゆ',r:'yu'},{k:'よ',r:'yo'}] },
+  { name:'R-row',    roman:'ra-ro',  chars:[{k:'ら',r:'ra'},{k:'り',r:'ri'},{k:'る',r:'ru'},{k:'れ',r:'re'},{k:'ろ',r:'ro'}] },
+  { name:'W-row + n',roman:'wa-n',  chars:[{k:'わ',r:'wa'},{k:'を',r:'wo'},{k:'ん',r:'n'}] }
+];
+
+const PASS_MSGS = ['Nice form — keep going.','Good stroke weight.','That feels right.','Clean and clear.','Well written.','Your hand knows this one.','Confident lines.'];
+const FAIL_MSGS = ['Close — try once more.','The curve needs a little more.','Almost there.','Try with a steadier stroke.','Give it another pass.'];
+const HINTS = ['curve too narrow','stroke too tall','try a lighter touch','the tail needs to hook','begin at the top','strokes flow left to right'];
+
+let state = {
+  rowProgress: { 1:{}, 2:{} },
+  unlockedRows: { 1:[0], 2:[] },
+  level2Unlocked: false,
+  level3Unlocked: false,
+  weakLetters: {},
+  streak: 0,
+  settings: { audio:true, stroke:true, trace:true, hand:false }
+};
+
+function saveState() { try { localStorage.setItem('hs_state', JSON.stringify(state)); } catch(e){} }
+function loadState() { try { const s=localStorage.getItem('hs_state'); if(s) state=JSON.parse(s); } catch(e){} }
+
+let lessonCtx = { level:1, rowIdx:0, charIdx:0, chars:[], currentMode:'lesson' };
+
+function setupCanvas(canvas, wrapper) {
+  const r = wrapper.getBoundingClientRect();
+  canvas.width = r.width * window.devicePixelRatio;
+  canvas.height = r.height * window.devicePixelRatio;
+  canvas.style.width = r.width + 'px';
+  canvas.style.height = r.height + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+}
+
+let drawCtx=null, traceCtx=null, isDrawing=false, hasDrawn=false, strokes=[], currentStroke=[];
+
+function initDrawCanvas(canvasEl, traceEl, char, showTrace) {
+  const wrapper = canvasEl.parentElement;
+  setupCanvas(canvasEl, wrapper);
+  if (traceEl) setupCanvas(traceEl, wrapper);
+  drawCtx = canvasEl.getContext('2d');
+  if (traceEl) traceCtx = traceEl.getContext('2d');
+  clearCanvas();
+  if (traceEl && showTrace) drawTraceGuide(traceCtx, char, wrapper);
+  canvasEl.removeEventListener('mousedown', onMouseDown);
+  canvasEl.removeEventListener('mousemove', onMouseMove);
+  canvasEl.removeEventListener('mouseup', onMouseUp);
+  canvasEl.removeEventListener('touchstart', onTouchStart);
+  canvasEl.removeEventListener('touchmove', onTouchMove);
+  canvasEl.removeEventListener('touchend', onTouchEnd);
+  canvasEl.addEventListener('mousedown', onMouseDown);
+  canvasEl.addEventListener('mousemove', onMouseMove);
+  canvasEl.addEventListener('mouseup', onMouseUp);
+  canvasEl.addEventListener('touchstart', onTouchStart, {passive:false});
+  canvasEl.addEventListener('touchmove', onTouchMove, {passive:false});
+  canvasEl.addEventListener('touchend', onTouchEnd);
+  hasDrawn=false; strokes=[]; currentStroke=[];
+}
+
+function clearCanvas() {
+  if (!drawCtx) return;
+  const w = drawCtx.canvas.width/window.devicePixelRatio;
+  const h = drawCtx.canvas.height/window.devicePixelRatio;
+  drawCtx.clearRect(0,0,w,h);
+  hasDrawn=false; strokes=[];
+  const hint = drawCtx.canvas.parentElement.querySelector('.canvas-hint');
+  if (hint) hint.style.opacity='1';
+}
+
+function getPos(e, canvas) {
+  const r = canvas.getBoundingClientRect();
+  if (e.touches) return { x:e.touches[0].clientX-r.left, y:e.touches[0].clientY-r.top };
+  return { x:e.clientX-r.left, y:e.clientY-r.top };
+}
+function onMouseDown(e) { startStroke(getPos(e,e.target)); }
+function onMouseMove(e) { if(isDrawing) addPoint(getPos(e,e.target)); }
+function onMouseUp() { endStroke(); }
+function onTouchStart(e) { e.preventDefault(); startStroke(getPos(e,e.target)); }
+function onTouchMove(e) { e.preventDefault(); if(isDrawing) addPoint(getPos(e,e.target)); }
+function onTouchEnd() { endStroke(); }
+
+function startStroke(pos) {
+  isDrawing=true; currentStroke=[pos];
+  drawCtx.beginPath(); drawCtx.moveTo(pos.x,pos.y);
+  drawCtx.strokeStyle='#1C1915'; drawCtx.lineWidth=2.5; drawCtx.lineCap='round'; drawCtx.lineJoin='round';
+  const hint=drawCtx.canvas.parentElement.querySelector('.canvas-hint');
+  if(hint) hint.style.opacity='0';
+  hasDrawn=true;
+}
+function addPoint(pos) {
+  currentStroke.push(pos);
+  drawCtx.lineTo(pos.x,pos.y); drawCtx.stroke();
+  drawCtx.beginPath(); drawCtx.moveTo(pos.x,pos.y);
+}
+function endStroke() {
+  if(!isDrawing) return;
+  isDrawing=false;
+  if(currentStroke.length>0) strokes.push([...currentStroke]);
+  currentStroke=[];
+}
+
+function drawTraceGuide(ctx, char, wrapper) {
+  if (!ctx) return;
+  const r = wrapper.getBoundingClientRect();
+  const w=r.width, h=r.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.font = `${Math.min(w,h)*0.72}px 'Noto Serif JP', serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle='#1C1915';
+  ctx.fillText(char, w/2, h/2);
+}
+
+function computeScore(strokes, targetChar) {
+  if (!hasDrawn || strokes.length===0) return 0;
+  let totalPts = strokes.reduce((s,st)=>s+st.length,0);
+  if (totalPts<5) return Math.floor(Math.random()*20+5);
+  const canvas=drawCtx.canvas;
+  const w=canvas.width/window.devicePixelRatio, h=canvas.height/window.devicePixelRatio;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  strokes.forEach(st=>st.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);}));
+  const drawCX=(minX+maxX)/2, drawCY=(minY+maxY)/2;
+  const centerDist=Math.sqrt((drawCX-w/2)**2+(drawCY-h/2)**2);
+  const centerScore=Math.max(0,1-centerDist/(Math.min(w,h)*0.4));
+  const sizeRatio=((maxX-minX)*(maxY-minY))/(w*h);
+  const sizeScore=sizeRatio<0.05?0.2:Math.min(1,sizeRatio/0.25);
+  const sc=strokes.length;
+  const strokeScore=sc>=1&&sc<=5?0.85+Math.random()*0.1:0.5;
+  const density=totalPts/(strokes.length*10);
+  const densityScore=Math.min(1,density/3);
+  let raw=(centerScore*0.3+sizeScore*0.3+strokeScore*0.2+densityScore*0.2);
+  raw=raw*0.7+Math.random()*0.3;
+  return Math.round(Math.min(98,Math.max(8,raw*100)));
+}
+
+function scoreLabel(score) {
+  if (score>=80) return pick(PASS_MSGS);
+  if (score>=50) return 'Close — you are nearly there.';
+  return pick(FAIL_MSGS);
+}
+function scoreFeedbackHint(score) { if(score>=80) return ''; return pick(HINTS); }
+function pick(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id==='progress') renderProgress();
+  if (id==='home') renderHome();
+}
+
+function renderHome() {
+  const grid=document.getElementById('homeKanaGrid');
+  grid.innerHTML='';
+  ROWS.forEach((row,ri)=>{
+    row.chars.forEach((c,ci)=>{
+      const span=document.createElement('span');
+      span.className='home-kana-char';
+      span.textContent=c.k;
+      const prog=getCharProgress(1,ri,ci);
+      if(prog&&prog.passed) span.classList.add('learned');
+      else if(isRowUnlocked(1,ri)) span.classList.add('current');
+      grid.appendChild(span);
+    });
+  });
+  const l2=document.getElementById('lvl2card'), l2num=document.getElementById('lvl2num');
+  const l3=document.getElementById('lvl3card'), l3num=document.getElementById('lvl3num');
+  if(!state.level2Unlocked){l2.classList.add('locked');l2num.className='level-card-num locked';l2num.textContent='🔒';}
+  else{l2.classList.remove('locked');l2num.className='level-card-num l2';l2num.textContent='II';}
+  if(!state.level3Unlocked){l3.classList.add('locked');l3num.className='level-card-num locked';l3num.textContent='🔒';}
+  else{l3.classList.remove('locked');l3num.className='level-card-num l3';l3num.textContent='III';}
+}
+
+function openLevel(lvl) {
+  if(lvl===2&&!state.level2Unlocked){toast('Complete Level I first');return;}
+  if(lvl===3&&!state.level3Unlocked){toast('Complete Level II first');return;}
+  lessonCtx.level=lvl;
+  const badge=document.getElementById('rowSelectBadge');
+  badge.textContent='Level '+['I','II','III'][lvl-1];
+  badge.className='level-badge l'+lvl;
+  document.getElementById('rowSelectTitle').textContent=lvl===1?'Choose a row — Level I':'Choose a row — Level II';
+  renderRowList(lvl);
+  showScreen('row-select');
+}
+
+function renderRowList(lvl) {
+  const list=document.getElementById('rowList');
+  list.innerHTML='';
+  ROWS.forEach((row,ri)=>{
+    const unlocked=isRowUnlocked(lvl,ri);
+    const completed=isRowComplete(lvl,ri);
+    const prog=rowProgress(lvl,ri);
+    const btn=document.createElement('button');
+    btn.className='row-item'+(completed?' mastered':'')+(!unlocked?' locked':'');
+    let statusText=completed?'✓ mastered':unlocked?prog+'/'+row.chars.length+' done':'locked';
+    btn.innerHTML=`${!unlocked?'<div class="lock-icon">🔒</div>':''}
+      <div class="row-item-header"><div class="row-item-name">${row.name}</div><div class="row-item-status">${statusText}</div></div>
+      <div class="row-item-kana">${row.chars.map(c=>c.k).join('　')}</div>
+      <div class="row-progress-bar"><div class="row-progress-fill" style="width:${Math.round(prog/row.chars.length*100)}%"></div></div>`;
+    if(unlocked) btn.onclick=()=>startLesson(lvl,ri);
+    list.appendChild(btn);
+  });
+}
+
+function isRowUnlocked(lvl,ri) { return (state.unlockedRows[lvl]||[]).includes(ri); }
+function isRowComplete(lvl,ri) { return ROWS[ri].chars.every((c,ci)=>{const p=getCharProgress(lvl,ri,ci);return p&&p.passed;}); }
+function rowProgress(lvl,ri) { let n=0;ROWS[ri].chars.forEach((c,ci)=>{const p=getCharProgress(lvl,ri,ci);if(p&&p.passed)n++;});return n; }
+function getCharProgress(lvl,ri,ci) { return (state.rowProgress[lvl]||{})[ri+'_'+ci]||null; }
+function setCharProgress(lvl,ri,ci,data) { if(!state.rowProgress[lvl])state.rowProgress[lvl]={};state.rowProgress[lvl][ri+'_'+ci]=data; }
+
+function startLesson(lvl,ri) {
+  lessonCtx.level=lvl; lessonCtx.rowIdx=ri; lessonCtx.charIdx=0;
+  lessonCtx.chars=ROWS[ri].chars.map((c,i)=>({...c,idx:i}));
+  lessonCtx.currentMode='lesson';
+  showScreen('lesson'); loadLessonChar();
+}
+
+function loadLessonChar() {
+  const ci=lessonCtx.charIdx, chars=lessonCtx.chars;
+  if(ci>=chars.length){finishRow();return;}
+  const char=chars[ci];
+  document.getElementById('lessonPhonetic').textContent=char.r;
+  document.getElementById('lessonChar').textContent=char.k;
+  document.getElementById('lessonProgressFill').style.width=(ci/chars.length*100)+'%';
+  document.getElementById('lessonProgressText').textContent=ci+'/'+chars.length;
+  document.getElementById('lessonFeedback').innerHTML='';
+  document.getElementById('btnCheck').textContent='Check';
+  document.getElementById('btnCheck').onclick=checkDrawing;
+  document.getElementById('resultOverlay').classList.remove('show');
+  const showTrace=lessonCtx.level===1&&state.settings.trace;
+  document.getElementById('traceCanvas').style.display=showTrace?'block':'none';
+  setTimeout(()=>{
+    const drawCanvas=document.getElementById('drawCanvas');
+    const traceCanvas=document.getElementById('traceCanvas');
+    const wrapper=document.getElementById('canvasWrapper');
+    initDrawCanvas(drawCanvas, showTrace?traceCanvas:null, char.k, showTrace);
+    if(showTrace&&state.settings.trace){
+      setupCanvas(traceCanvas,wrapper);
+      traceCtx=traceCanvas.getContext('2d');
+      drawTraceGuide(traceCtx,char.k,wrapper);
+    }
+  },50);
+  document.getElementById('canvasHint').textContent=lessonCtx.level===1?'Trace with your finger':'Write from memory';
+}
+
+function checkDrawing() {
+  if(!hasDrawn){toast('Draw the character first');return;}
+  const char=lessonCtx.chars[lessonCtx.charIdx];
+  const score=computeScore(strokes,char.k);
+  const passed=score>=50;
+  const existing=getCharProgress(lessonCtx.level,lessonCtx.rowIdx,lessonCtx.charIdx);
+  const best=existing?Math.max(existing.bestScore,score):score;
+  setCharProgress(lessonCtx.level,lessonCtx.rowIdx,lessonCtx.charIdx,{attempts:(existing?existing.attempts:0)+1,bestScore:best,passed:passed||(existing&&existing.passed)});
+  if(!state.weakLetters[char.k]) state.weakLetters[char.k]={score:0,attempts:0};
+  state.weakLetters[char.k].attempts++;
+  state.weakLetters[char.k].score=(state.weakLetters[char.k].score+score)/2;
+  saveState();
+  const overlay=document.getElementById('resultOverlay');
+  document.getElementById('resultKana').textContent=char.k;
+  document.getElementById('resultScore').textContent=score+'%';
+  document.getElementById('resultScore').className='result-score '+(passed?'pass':'fail');
+  document.getElementById('resultLabel').textContent=scoreLabel(score);
+  const hint=scoreFeedbackHint(score);
+  document.getElementById('resultHint').textContent=hint;
+  document.getElementById('resultHint').style.display=hint?'block':'none';
+  overlay.classList.add('show');
+}
+
+function retryFromResult() {
+  document.getElementById('resultOverlay').classList.remove('show');
+  clearCanvas();
+  setTimeout(()=>{
+    const char=lessonCtx.chars[lessonCtx.charIdx];
+    const showTrace=lessonCtx.level===1&&state.settings.trace;
+    const drawCanvas=document.getElementById('drawCanvas');
+    const traceCanvas=document.getElementById('traceCanvas');
+    const wrapper=document.getElementById('canvasWrapper');
+    initDrawCanvas(drawCanvas,showTrace?traceCanvas:null,char.k,showTrace);
+    if(showTrace){setupCanvas(traceCanvas,wrapper);traceCtx=traceCanvas.getContext('2d');drawTraceGuide(traceCtx,char.k,wrapper);}
+  },50);
+}
+
+function retryChar() { clearCanvas(); }
+function nextChar() { document.getElementById('resultOverlay').classList.remove('show'); lessonCtx.charIdx++; loadLessonChar(); }
+
+function finishRow() {
+  const lvl=lessonCtx.level, ri=lessonCtx.rowIdx;
+  const nextRi=ri+1;
+  if(nextRi<ROWS.length&&!isRowUnlocked(lvl,nextRi)){if(!state.unlockedRows[lvl])state.unlockedRows[lvl]=[];state.unlockedRows[lvl].push(nextRi);}
+  const allDone=ROWS.every((r,i)=>isRowComplete(lvl,i));
+  if(allDone){if(lvl===1)state.level2Unlocked=true;if(lvl===2)state.level3Unlocked=true;}
+  saveState();
+  document.getElementById('badgeTitle').textContent=ROWS[ri].name+' Complete';
+  document.getElementById('badgeKana').textContent=ROWS[ri].chars.map(c=>c.k).join('　');
+  if(nextRi<ROWS.length&&isRowUnlocked(lvl,nextRi)) document.getElementById('badgeSub').textContent=ROWS[nextRi].name+' unlocked';
+  else if(allDone) document.getElementById('badgeSub').textContent='Level '+['II','III'][lvl-1]+' unlocked!';
+  else document.getElementById('badgeSub').textContent='Well done';
+  document.getElementById('rowBadge').classList.add('show');
+}
+
+function dismissBadge() { document.getElementById('rowBadge').classList.remove('show'); showScreen('row-select'); renderRowList(lessonCtx.level); }
+function exitLesson() { ['resultOverlay','mmResultOverlay','weakResultOverlay'].forEach(id=>document.getElementById(id).classList.remove('show')); showScreen('home'); }
+
+function playAudio() {
+  if(!state.settings.audio) return;
+  const char=lessonCtx.chars[lessonCtx.charIdx];
+  if(!char) return;
+  try { const u=new SpeechSynthesisUtterance(char.k); u.lang='ja-JP'; u.rate=0.8; speechSynthesis.speak(u); } catch(e){}
+}
+
+// MAD MAX
+let mmPool=[],mmPoolIdx=0,mmCurrentChar=null,mmDrawCtxObj=null,mmStrokes=[],mmHasDrawn=false,mmIsDrawing=false,mmCurStroke=[];
+
+function openMadMax() {
+  if(!state.level3Unlocked){toast('Complete Level II to unlock Fury Mode');return;}
+  const pool=buildMadMaxPool();
+  if(pool.length===0){toast('No kana learned yet');return;}
+  state.streak=0; lessonCtx.currentMode='madmax';
+  showScreen('madmax');
+  document.getElementById('streakDisplay').textContent='✦ 0';
+  mmLoadNext(pool);
+}
+
+function buildMadMaxPool() {
+  let pool=[];
+  ROWS.forEach((row,ri)=>{ row.chars.forEach((c,ci)=>{ const p=getCharProgress(2,ri,ci)||getCharProgress(1,ri,ci); if(!p||!p.passed) return; let w=1; const wk=state.weakLetters[c.k]; if(wk&&wk.score<70) w=3; for(let i=0;i<w;i++) pool.push({...c,ri,ci}); }); });
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  return pool;
+}
+
+function mmLoadNext(pool) {
+  if(pool){mmPool=pool;mmPoolIdx=0;}
+  if(mmPoolIdx>=mmPool.length){for(let i=mmPool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[mmPool[i],mmPool[j]]=[mmPool[j],mmPool[i]];}mmPoolIdx=0;}
+  mmCurrentChar=mmPool[mmPoolIdx++];
+  document.getElementById('mmPhonetic').textContent=mmCurrentChar.r;
+  document.getElementById('mmResultOverlay').classList.remove('show');
+  document.getElementById('mmFeedback').innerHTML='';
+  setTimeout(()=>{
+    const canvas=document.getElementById('mmCanvas');
+    const wrapper=document.getElementById('mmCanvasWrapper');
+    setupCanvas(canvas,wrapper);
+    mmDrawCtxObj=canvas.getContext('2d');
+    canvas.removeEventListener('mousedown',mmMouseDown);canvas.removeEventListener('mousemove',mmMouseMove);canvas.removeEventListener('mouseup',mmMouseUp);
+    canvas.removeEventListener('touchstart',mmTouchStart);canvas.removeEventListener('touchmove',mmTouchMove);canvas.removeEventListener('touchend',mmTouchEnd);
+    canvas.addEventListener('mousedown',mmMouseDown);canvas.addEventListener('mousemove',mmMouseMove);canvas.addEventListener('mouseup',mmMouseUp);
+    canvas.addEventListener('touchstart',mmTouchStart,{passive:false});canvas.addEventListener('touchmove',mmTouchMove,{passive:false});canvas.addEventListener('touchend',mmTouchEnd);
+    mmStrokes=[];mmHasDrawn=false;mmIsDrawing=false;
+    document.getElementById('mmHint').style.opacity='1';
+  },50);
+}
+
+function mmGetPos(e,c){const r=c.getBoundingClientRect();if(e.touches)return{x:e.touches[0].clientX-r.left,y:e.touches[0].clientY-r.top};return{x:e.clientX-r.left,y:e.clientY-r.top};}
+function mmMouseDown(e){mmStart(mmGetPos(e,e.target));}function mmMouseMove(e){if(mmIsDrawing)mmAdd(mmGetPos(e,e.target));}function mmMouseUp(){mmEnd();}
+function mmTouchStart(e){e.preventDefault();mmStart(mmGetPos(e,e.target));}function mmTouchMove(e){e.preventDefault();if(mmIsDrawing)mmAdd(mmGetPos(e,e.target));}function mmTouchEnd(){mmEnd();}
+function mmStart(pos){mmIsDrawing=true;mmCurStroke=[pos];mmDrawCtxObj.beginPath();mmDrawCtxObj.moveTo(pos.x,pos.y);mmDrawCtxObj.strokeStyle='#1C1915';mmDrawCtxObj.lineWidth=2.5;mmDrawCtxObj.lineCap='round';mmDrawCtxObj.lineJoin='round';document.getElementById('mmHint').style.opacity='0';mmHasDrawn=true;}
+function mmAdd(pos){mmCurStroke.push(pos);mmDrawCtxObj.lineTo(pos.x,pos.y);mmDrawCtxObj.stroke();mmDrawCtxObj.beginPath();mmDrawCtxObj.moveTo(pos.x,pos.y);}
+function mmEnd(){if(!mmIsDrawing)return;mmIsDrawing=false;if(mmCurStroke.length>0)mmStrokes.push([...mmCurStroke]);mmCurStroke=[];}
+
+function mmCheck() {
+  if(!mmHasDrawn){toast('Draw the character first');return;}
+  const score=computeScoreFromData(mmStrokes,mmDrawCtxObj.canvas);
+  const passed=score>=50;
+  if(!state.weakLetters[mmCurrentChar.k]) state.weakLetters[mmCurrentChar.k]={score:0,attempts:0};
+  state.weakLetters[mmCurrentChar.k].attempts++;
+  state.weakLetters[mmCurrentChar.k].score=state.weakLetters[mmCurrentChar.k].score*0.7+score*0.3;
+  if(passed) state.streak++; else state.streak=0;
+  document.getElementById('streakDisplay').textContent='✦ '+state.streak;
+  saveState();
+  document.getElementById('mmResultKana').textContent=mmCurrentChar.k;
+  document.getElementById('mmResultScore').textContent=score+'%';
+  document.getElementById('mmResultScore').className='result-score '+(passed?'pass':'fail');
+  document.getElementById('mmResultLabel').textContent=scoreLabel(score);
+  const hint=scoreFeedbackHint(score);
+  document.getElementById('mmResultHint').textContent=hint;
+  document.getElementById('mmResultOverlay').classList.add('show');
+}
+
+function mmRetry(){const c=document.getElementById('mmCanvas');const w=document.getElementById('mmCanvasWrapper').getBoundingClientRect();mmDrawCtxObj.clearRect(0,0,w.width,w.height);mmStrokes=[];mmHasDrawn=false;document.getElementById('mmHint').style.opacity='1';}
+function mmRetryResult(){document.getElementById('mmResultOverlay').classList.remove('show');mmRetry();}
+function mmNext(){document.getElementById('mmResultOverlay').classList.remove('show');mmLoadNext();}
+
+function computeScoreFromData(strokes,canvas) {
+  if(!strokes||strokes.length===0) return 0;
+  const totalPts=strokes.reduce((s,st)=>s+st.length,0);
+  if(totalPts<5) return Math.floor(Math.random()*20+5);
+  const w=canvas.width/window.devicePixelRatio, h=canvas.height/window.devicePixelRatio;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  strokes.forEach(st=>st.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);}));
+  const drawCX=(minX+maxX)/2,drawCY=(minY+maxY)/2;
+  const centerDist=Math.sqrt((drawCX-w/2)**2+(drawCY-h/2)**2);
+  const centerScore=Math.max(0,1-centerDist/(Math.min(w,h)*0.4));
+  const sizeRatio=((maxX-minX)*(maxY-minY))/(w*h);
+  const sizeScore=sizeRatio<0.05?0.2:Math.min(1,sizeRatio/0.25);
+  const sc=strokes.length;
+  const strokeScore=sc>=1&&sc<=5?0.85+Math.random()*0.1:0.5;
+  const density=totalPts/(strokes.length*10);
+  const densityScore=Math.min(1,density/3);
+  let raw=(centerScore*0.3+sizeScore*0.3+strokeScore*0.2+densityScore*0.2);
+  raw=raw*0.7+Math.random()*0.3;
+  return Math.round(Math.min(98,Math.max(8,raw*100)));
+}
+
+// WEAK MODE
+let weakPool=[],weakPoolIdx=0,weakCurrentChar=null,weakDrawCtxObj=null,weakStrokes=[],weakHasDrawn=false,weakIsDrawing=false,weakCurStroke=[];
+
+function openWeakMode() {
+  weakPool=buildWeakPool();
+  if(weakPool.length===0){toast('No weak letters yet — keep practicing!');return;}
+  weakPoolIdx=0; lessonCtx.currentMode='weak';
+  showScreen('weakmode');
+  document.getElementById('weakCount').textContent=weakPool.length+' letters';
+  weakLoadNext();
+}
+
+function buildWeakPool() {
+  let pool=[];
+  ROWS.forEach((row,ri)=>{row.chars.forEach((c,ci)=>{const wk=state.weakLetters[c.k];if(wk&&wk.score<70&&wk.attempts>0) pool.push({...c,ri,ci});});});
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  return pool;
+}
+
+function weakLoadNext() {
+  if(weakPoolIdx>=weakPool.length){weakPool=buildWeakPool();if(weakPool.length===0){toast('All letters improved!');showScreen('home');return;}weakPoolIdx=0;}
+  weakCurrentChar=weakPool[weakPoolIdx++];
+  document.getElementById('weakPhonetic').textContent=weakCurrentChar.r;
+  document.getElementById('weakResultOverlay').classList.remove('show');
+  document.getElementById('weakFeedback').innerHTML='';
+  setTimeout(()=>{
+    const canvas=document.getElementById('weakCanvas');
+    const wrapper=document.getElementById('weakCanvasWrapper');
+    setupCanvas(canvas,wrapper);
+    weakDrawCtxObj=canvas.getContext('2d');
+    canvas.removeEventListener('mousedown',wkMD);canvas.removeEventListener('mousemove',wkMM);canvas.removeEventListener('mouseup',wkMU);
+    canvas.removeEventListener('touchstart',wkTS);canvas.removeEventListener('touchmove',wkTM);canvas.removeEventListener('touchend',wkTE);
+    canvas.addEventListener('mousedown',wkMD);canvas.addEventListener('mousemove',wkMM);canvas.addEventListener('mouseup',wkMU);
+    canvas.addEventListener('touchstart',wkTS,{passive:false});canvas.addEventListener('touchmove',wkTM,{passive:false});canvas.addEventListener('touchend',wkTE);
+    weakStrokes=[];weakHasDrawn=false;weakIsDrawing=false;
+    document.getElementById('weakHint').style.opacity='1';
+  },50);
+}
+
+function wkGetPos(e,c){const r=c.getBoundingClientRect();if(e.touches)return{x:e.touches[0].clientX-r.left,y:e.touches[0].clientY-r.top};return{x:e.clientX-r.left,y:e.clientY-r.top};}
+function wkMD(e){wkStart(wkGetPos(e,e.target));}function wkMM(e){if(weakIsDrawing)wkAdd(wkGetPos(e,e.target));}function wkMU(){wkEnd();}
+function wkTS(e){e.preventDefault();wkStart(wkGetPos(e,e.target));}function wkTM(e){e.preventDefault();if(weakIsDrawing)wkAdd(wkGetPos(e,e.target));}function wkTE(){wkEnd();}
+function wkStart(pos){weakIsDrawing=true;weakCurStroke=[pos];weakDrawCtxObj.beginPath();weakDrawCtxObj.moveTo(pos.x,pos.y);weakDrawCtxObj.strokeStyle='#1C1915';weakDrawCtxObj.lineWidth=2.5;weakDrawCtxObj.lineCap='round';weakDrawCtxObj.lineJoin='round';document.getElementById('weakHint').style.opacity='0';weakHasDrawn=true;}
+function wkAdd(pos){weakCurStroke.push(pos);weakDrawCtxObj.lineTo(pos.x,pos.y);weakDrawCtxObj.stroke();weakDrawCtxObj.beginPath();weakDrawCtxObj.moveTo(pos.x,pos.y);}
+function wkEnd(){if(!weakIsDrawing)return;weakIsDrawing=false;if(weakCurStroke.length>0)weakStrokes.push([...weakCurStroke]);weakCurStroke=[];}
+
+function weakCheck() {
+  if(!weakHasDrawn){toast('Draw the character first');return;}
+  const score=computeScoreFromData(weakStrokes,weakDrawCtxObj.canvas);
+  const passed=score>=50;
+  if(!state.weakLetters[weakCurrentChar.k]) state.weakLetters[weakCurrentChar.k]={score:0,attempts:0};
+  state.weakLetters[weakCurrentChar.k].attempts++;
+  state.weakLetters[weakCurrentChar.k].score=state.weakLetters[weakCurrentChar.k].score*0.6+score*0.4;
+  saveState();
+  document.getElementById('weakResultKana').textContent=weakCurrentChar.k;
+  document.getElementById('weakResultScore').textContent=score+'%';
+  document.getElementById('weakResultScore').className='result-score '+(passed?'pass':'fail');
+  document.getElementById('weakResultLabel').textContent=scoreLabel(score);
+  const hint=scoreFeedbackHint(score);
+  document.getElementById('weakResultHint').textContent=hint;
+  document.getElementById('weakResultOverlay').classList.add('show');
+}
+
+function weakRetry(){const c=document.getElementById('weakCanvas');const w=document.getElementById('weakCanvasWrapper').getBoundingClientRect();weakDrawCtxObj.clearRect(0,0,w.width,w.height);weakStrokes=[];weakHasDrawn=false;document.getElementById('weakHint').style.opacity='1';}
+function weakRetryResult(){document.getElementById('weakResultOverlay').classList.remove('show');weakRetry();}
+function weakNext(){document.getElementById('weakResultOverlay').classList.remove('show');weakLoadNext();}
+
+// PROGRESS
+function renderProgress() {
+  let totalLearned=0,totalAttempted=0;
+  ROWS.forEach((row,ri)=>{ row.chars.forEach((c,ci)=>{ const p=getCharProgress(1,ri,ci); if(p){totalAttempted++;if(p.passed)totalLearned++;} }); });
+  const weakCount=Object.values(state.weakLetters).filter(w=>w.score<70&&w.attempts>0).length;
+  document.getElementById('progressStats').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${totalLearned}</div><div class="stat-label">Learned</div></div>
+    <div class="stat-card"><div class="stat-num">${46-totalLearned}</div><div class="stat-label">Remaining</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--rust)">${weakCount}</div><div class="stat-label">Weak</div></div>`;
+  const rows=document.getElementById('progressRows');
+  rows.innerHTML='';
+  ROWS.forEach((row,ri)=>{
+    const unlocked=isRowUnlocked(1,ri),completed=isRowComplete(1,ri),prog=rowProgress(1,ri);
+    const icon=completed?'✓':unlocked?'·':'🔒';
+    const pct=Math.round(prog/row.chars.length*100);
+    rows.innerHTML+=`<div class="progress-row-item">
+      <div class="progress-row-icon">${icon}</div>
+      <div class="progress-row-info"><div class="progress-row-name">${row.name}</div><div class="progress-row-kana">${row.chars.map(c=>c.k).join(' ')}</div></div>
+      <div class="progress-row-bar"><div class="row-progress-bar"><div class="row-progress-fill" style="width:${pct}%"></div></div></div>
+    </div>`;
+  });
+  const weakDiv=document.getElementById('weakChars');
+  weakDiv.innerHTML='';
+  ROWS.forEach((row,ri)=>{ row.chars.forEach((c,ci)=>{ const wk=state.weakLetters[c.k]; if(wk&&wk.score<70&&wk.attempts>0) weakDiv.innerHTML+=`<div class="weak-char"><div class="weak-char-kana">${c.k}</div><div class="weak-char-rom">${c.r}</div></div>`; }); });
+  if(!weakDiv.innerHTML) weakDiv.innerHTML='<div style="color:var(--ink-muted);font-style:italic;font-size:14px">None yet — keep practicing</div>';
+}
+
+// SETTINGS
+function toggleSetting(key) {
+  state.settings[key]=!state.settings[key];
+  const el=document.getElementById('toggle'+key.charAt(0).toUpperCase()+key.slice(1));
+  if(el) el.className='toggle'+(state.settings[key]?' on':'');
+  saveState();
+}
+function resetProgress() {
+  if(!confirm('Reset all progress? This cannot be undone.')) return;
+  state.rowProgress={1:{},2:{}}; state.unlockedRows={1:[0],2:[]}; state.level2Unlocked=false; state.level3Unlocked=false; state.weakLetters={}; state.streak=0;
+  saveState(); toast('Progress reset'); renderHome();
+}
+
+// TOAST
+function toast(msg,duration=2200) {
+  const container=document.getElementById('toastContainer');
+  const el=document.createElement('div'); el.className='toast'; el.textContent=msg;
+  container.appendChild(el);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},duration);
+}
+
+// INIT
+function init() {
+  loadState();
+  if(!state.unlockedRows) state.unlockedRows={1:[0],2:[]};
+  if(!state.unlockedRows[1]) state.unlockedRows[1]=[0];
+  if(!state.unlockedRows[2]) state.unlockedRows[2]=[];
+  if(!state.rowProgress) state.rowProgress={1:{},2:{}};
+  if(!state.weakLetters) state.weakLetters={};
+  if(!state.settings) state.settings={audio:true,stroke:true,trace:true,hand:false};
+  ['audio','stroke','trace','hand'].forEach(k=>{
+    const el=document.getElementById('toggle'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(el) el.className='toggle'+(state.settings[k]?' on':'');
+  });
+  renderHome();
+}
+init();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
